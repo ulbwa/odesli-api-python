@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "SongLinkAPI"
+version = "0.1.0"
+description = ""
+authors = ["ульба <ulbwa@icloud.com>"]
+readme = "README.md"
+packages = [{include = "SongLinkAPI"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = "^0.24.0"
+httpx-cache = "^0.9.0"
+orjson = "^3.8.10"
+pydantic = "^1.10.7"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
