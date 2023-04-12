@@ -17,7 +17,7 @@ import pkg_resources
 import datetime
 
 try:
-    __version__ = pkg_resources.get_distribution("SongLinkAPI").version
+    __version__ = pkg_resources.get_distribution("songlink_api").version
 except pkg_resources.DistributionNotFound:
     __version__ = ""
 

@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "SongLinkAPI"
+name = "songlink_api"
 version = "0.1.1"
 description = ""
 authors = ["ульба <ulbwa@icloud.com>"]
 readme = "README.md"
-packages = [{include = "SongLinkAPI"}]
+packages = [{include = "songlink_api"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
