@@ -10,11 +10,11 @@ API Documentation: [notion.site](https://linktree.notion.site/API-d0ebe08a5e304a
 ## Installation
 
 ```bash
-pip3 install git+https://github.com/ulbwa/SongLinkAPI
+pip3 install git+https://github.com/ulbwa/songlink_api_python
 ```
 or
 ```bash
-poetry add git+https://github.com/ulbwa/SongLinkAPI
+poetry add git+https://github.com/ulbwa/songlink_api_python
 ```
 
 ## Usage example
@@ -22,7 +22,7 @@ poetry add git+https://github.com/ulbwa/SongLinkAPI
 ```python
 import asyncio
 
-from SongLinkAPI import SongLink
+from songlink_api import SongLink
 
 songlink = SongLink()
 

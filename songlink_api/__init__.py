@@ -1,15 +1,15 @@
 from typing import Optional
 from typing import Union
 
-from SongLinkAPI.types.exceptions import APIException
-from SongLinkAPI.types.exceptions import TooManyRequests
-from SongLinkAPI.types.exceptions import EntityNotFound
+from songlink_api.types.exceptions import APIException
+from songlink_api.types.exceptions import TooManyRequests
+from songlink_api.types.exceptions import EntityNotFound
 
-from SongLinkAPI.types import PlatformName
-from SongLinkAPI.types import EntityType
-from SongLinkAPI.types import EntityUniqueId
-from SongLinkAPI.types import APIResponse
-from SongLinkAPI.types import Platform
+from songlink_api.types import PlatformName
+from songlink_api.types import EntityType
+from songlink_api.types import EntityUniqueId
+from songlink_api.types import APIResponse
+from songlink_api.types import Platform
 
 import httpx_cache
 import orjson
