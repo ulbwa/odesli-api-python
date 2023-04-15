@@ -9,6 +9,7 @@ from songlink_api.types import PlatformName
 from songlink_api.types import EntityType
 from songlink_api.types import EntityUniqueId
 from songlink_api.types import APIResponse
+from songlink_api.types import APIProvider
 from songlink_api.types import Platform
 
 import httpx_cache
@@ -43,7 +44,9 @@ class SongLink:
     def __repr__(self) -> str:
         return f"<SongLink at {hex(id(self))}>"
 
-    async def __make_request(self, method: str, params: Optional[dict] = None):
+    async def __make_request(
+        self, method: str, params: Optional[dict] = None
+    ) -> APIResponse:
         if (
             self.__throttling_reset_in is not None
             and self.__throttling_reset_in >= datetime.datetime.now()
@@ -108,9 +111,11 @@ class SongLink:
                         platforms=[
                             PlatformName(platform_name)
                             for platform_name in entity.get("platforms")
+                            if entity.get("platforms") in list(PlatformName)
                         ],
                     )
                     for entity in data.get("entitiesByUniqueId").values()
+                    if entity.get("apiProvider") in list(APIProvider)
                 ],
                 links_by_platform=[
                     Platform(
@@ -122,6 +127,7 @@ class SongLink:
                         native_app_uri_desktop=platform.get("nativeAppUriDesktop"),
                     )
                     for platform_name, platform in data.get("linksByPlatform").items()
+                    if platform_name in list(PlatformName)
                 ],
             )
 
@@ -130,7 +136,7 @@ class SongLink:
         url: str,
         user_country: str = "US",
         song_if_single: bool = False,
-    ):
+    ) -> APIResponse:
         return await self.__make_request(
             method="links",
             params={
@@ -147,7 +153,7 @@ class SongLink:
         type: EntityType,
         user_country: str = "US",
         song_if_single: bool = False,
-    ):
+    ) -> APIResponse:
         return await self.__make_request(
             method="links",
             params={
