@@ -33,6 +33,20 @@ class SongLink:
         use_cache: bool = True,
         cache_time: int = 900,
     ) -> None:
+        """
+        Initialize a new SongLink instance with the specified API configuration options.
+
+        Args:
+            api_key (Optional[str]): The API key to use for making SongLink API requests.
+            api_url (str): The base URL for the SongLink API. Defaults to "https://api.song.link/".
+            api_version (str): The version number of the SongLink API to use. Defaults to "v1-alpha.1".
+            api_timeout (int): The number of seconds to wait for a response from the API before timing out. Defaults to 60.
+            use_cache (bool): Whether to enable response caching for API requests. Defaults to True.
+            cache_time (int): The number of seconds to cache API responses for. Ignored if use_cache is false. Defaults to 900.
+
+        Returns:
+            None
+        """
         self.api_key = api_key
         self.api_url = api_url.rstrip("/")
         self.api_version = api_version
@@ -47,6 +61,21 @@ class SongLink:
     async def __make_request(
         self, method: str, params: Optional[dict] = None
     ) -> APIResponse:
+        """
+        Sends a HTTP request to the SongLink API and returns the response data as an APIResponse object
+
+        Args:
+            method (str): The API method to call
+            params (Optional[dict]): Dictionary of query string parameters to send with the request. Defaults to None.
+
+        Raises:
+            TooManyRequests: If the API returns a 'too_many_requests' error code
+            EntityNotFound: If the API returns a 'could_not_fetch_entity_data' error code
+            APIException: If the response status code is not 200 or the response data is empty
+
+        Returns:
+            APIResponse: An object containing the API response data
+        """
         if (
             self.__throttling_reset_in is not None
             and self.__throttling_reset_in >= datetime.datetime.now()
@@ -137,6 +166,22 @@ class SongLink:
         user_country: str = "US",
         song_if_single: bool = False,
     ) -> APIResponse:
+        """
+        Sends a HTTP request to the SongLink API with the provided URL and returns the response data as an APIResponse object.
+
+        Args:
+            url (str): The URL of the song or album to retrieve links for.
+            user_country (str): The 2-letter country code to search links for. Defaults to "US".
+            song_if_single (bool): Whether to return links to the full album or only to the song for single-track releases. Defaults to False.
+
+        Raises:
+            TooManyRequests: If the API returns a 'too_many_requests' error code
+            EntityNotFound: If the API returns a 'could_not_fetch_entity_data' error code
+            APIException: If the response status code is not 200 or the response data is empty
+
+        Returns:
+            APIResponse: An object containing the API response data
+        """
         return await self.__make_request(
             method="links",
             params={
@@ -154,6 +199,22 @@ class SongLink:
         user_country: str = "US",
         song_if_single: bool = False,
     ) -> APIResponse:
+        """
+        Sends a HTTP request to the SongLink API with the provided song ID and returns the response data as an APIResponse object.
+
+        Args:
+            song_id (str): The SongLink ID of the song or album to retrieve links for.
+            user_country (str): The 2-letter country code to search links for. Defaults to "US".
+            song_if_single (bool): Whether to return links to the full album or only to the song for single-track releases. Defaults to False.
+
+        Raises:
+            TooManyRequests: If the API returns a 'too_many_requests' error code
+            EntityNotFound: If the API returns a 'could_not_fetch_entity_data' error code
+            APIException: If the response status code is not 200 or the response data is empty
+
+        Returns:
+            APIResponse: An object containing the API response data
+        """
         return await self.__make_request(
             method="links",
             params={
