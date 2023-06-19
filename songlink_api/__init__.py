@@ -125,9 +125,10 @@ class SongLink:
                     data = await response.json(
                         loads=orjson.loads if self.use_orjson else DEFAULT_JSON_DECODER
                     )
-                except ZeroDivisionError:
+                except Exception:
                     data = {}
-                if response.status != 200 or data == {}:
+
+                if response.status != 200 or not data:
                     reason = data.get("code")
                     if reason == "too_many_requests":
                         self.connections[
