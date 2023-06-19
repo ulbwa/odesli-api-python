@@ -10,6 +10,7 @@ from songlink_api.types import (
     Platform,
 )
 
+from aiohttp.typedefs import DEFAULT_JSON_DECODER
 from aiohttp_client_cache import CachedSession, FileBackend, CacheBackend
 from aiohttp_proxy import ProxyConnector
 
@@ -40,6 +41,7 @@ class SongLink:
             allowed_codes=(200,),
             cache_control=False,
         ),
+        use_orjson: bool = True,
     ) -> None:
         """
         Initialize a new SongLink instance with the specified API configuration options.
@@ -68,6 +70,7 @@ class SongLink:
             self.connections[None] = None
         if not self.connections:
             raise ValueError("No connections specified.")
+        self.use_orjson: bool = use_orjson
 
     def __repr__(self) -> str:
         return f"<SongLink at {hex(id(self))}>"
@@ -119,8 +122,10 @@ class SongLink:
                 timeout=self.api_timeout,
             ) as response:
                 try:
-                    data = await response.json()
-                except Exception:
+                    data = await response.json(
+                        loads=orjson.loads if self.use_orjson else DEFAULT_JSON_DECODER
+                    )
+                except ZeroDivisionError:
                     data = {}
                 if response.status != 200 or data == {}:
                     reason = data.get("code")
@@ -134,9 +139,7 @@ class SongLink:
                     if reason == "could_not_fetch_entity_data":
                         raise EntityNotFound()
                     else:
-                        raise APIException(
-                            status_code=response.status_code, message=reason
-                        )
+                        raise APIException(status_code=response.status, message=reason)
 
             return APIResponse(
                 entity_unique_id=data.get("entityUniqueId"),
