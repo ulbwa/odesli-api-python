@@ -1,21 +1,22 @@
-from typing import Optional
-from typing import Union
+from typing import Optional, Union, List
 
-from songlink_api.types.exceptions import APIException
-from songlink_api.types.exceptions import TooManyRequests
-from songlink_api.types.exceptions import EntityNotFound
+from songlink_api.types.exceptions import APIException, TooManyRequests, EntityNotFound
+from songlink_api.types import (
+    PlatformName,
+    EntityType,
+    EntityUniqueId,
+    APIResponse,
+    APIProvider,
+    Platform,
+)
 
-from songlink_api.types import PlatformName
-from songlink_api.types import EntityType
-from songlink_api.types import EntityUniqueId
-from songlink_api.types import APIResponse
-from songlink_api.types import APIProvider
-from songlink_api.types import Platform
+from aiohttp_client_cache import CachedSession, FileBackend, CacheBackend
+from aiohttp_proxy import ProxyConnector
 
-import httpx_cache
 import orjson
 import pkg_resources
 import datetime
+import random
 
 try:
     __version__ = pkg_resources.get_distribution("songlink_api").version
@@ -26,12 +27,19 @@ except pkg_resources.DistributionNotFound:
 class SongLink:
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         api_url: str = "https://api.song.link/",
         api_version: str = "v1-alpha.1",
         api_timeout: int = 60,
-        use_cache: bool = True,
-        cache_time: int = 900,
+        proxy: List[str] | str | None = None,
+        always_use_proxy: bool = False,
+        cache_backend: CacheBackend
+        | None = FileBackend(
+            expire_after=900,
+            ignored_parameters=["key"],
+            allowed_codes=(200,),
+            cache_control=False,
+        ),
     ) -> None:
         """
         Initialize a new SongLink instance with the specified API configuration options.
@@ -47,13 +55,19 @@ class SongLink:
         Returns:
             None
         """
-        self.api_key = api_key
-        self.api_url = api_url.rstrip("/")
-        self.api_version = api_version
-        self.api_timeout = api_timeout
-        self.use_cache = use_cache
-        self.cache_time = cache_time
-        self.__throttling_reset_in = None
+        self.api_key: str | None = api_key
+        self.api_url: str = api_url.rstrip("/")
+        self.api_version: str = api_version
+        self.api_timeout: int = api_timeout
+        self.cache_backend: CacheBackend | None = cache_backend
+        self.connections: Dict[str | None, datetime.datetime | None] = {}
+        if proxy is not None:
+            for _proxy in proxy if isinstance(proxy, list) else [proxy]:
+                self.connections[_proxy] = None
+        if not always_use_proxy:
+            self.connections[None] = None
+        if not self.connections:
+            raise ValueError("No connections specified.")
 
     def __repr__(self) -> str:
         return f"<SongLink at {hex(id(self))}>"
@@ -76,25 +90,24 @@ class SongLink:
         Returns:
             APIResponse: An object containing the API response data
         """
-        if (
-            self.__throttling_reset_in is not None
-            and self.__throttling_reset_in >= datetime.datetime.now()
-        ):
+        if all(map(lambda e: self.connections[e] is not None, self.connections)):
             raise TooManyRequests()
 
-        async with httpx_cache.AsyncClient(
+        connection = random.choice(
+            list(filter(lambda e: self.connections[e] is None, self.connections))
+        )
+
+        async with CachedSession(
+            connector=None
+            if connection is None
+            else ProxyConnector.from_url(connection),
+            cache=self.cache_backend,
             headers={
                 "User-Agent": f"SongLinkAPI/v{__version__}",
-                "cache-control": f"max-age={self.cache_time}"
-                if self.use_cache
-                else "no-cache",
             },
-            cache=httpx_cache.FileCache(),
-            always_cache=True,
-        ) as client:
-            request = client.build_request(
-                "GET",
-                f"{self.api_url}/{self.api_version}/{method}",
+        ) as session:
+            async with session.get(
+                url=f"{self.api_url}/{self.api_version}/{method}",
                 params={
                     **(
                         {k: v for k, v in params.items() if v is not None}
@@ -104,24 +117,26 @@ class SongLink:
                     **({"key": self.api_key} if self.api_key is not None else {}),
                 },
                 timeout=self.api_timeout,
-            )
-            response = await client.send(request)
-            try:
-                data = orjson.loads(response.content)
-            except Exception:
-                data = {}
-            if response.status_code != 200 or data == {}:
-                reason = data.get("code")
-                if reason == "too_many_requests":
-                    self.__throttling_reset_in = (
-                        datetime.datetime.now()
-                        + datetime.timedelta(seconds=self.api_timeout)
-                    )
-                    raise TooManyRequests()
-                if reason == "could_not_fetch_entity_data":
-                    raise EntityNotFound()
-                else:
-                    raise APIException(status_code=response.status_code, message=reason)
+            ) as response:
+                try:
+                    data = await response.json()
+                except Exception:
+                    data = {}
+                if response.status != 200 or data == {}:
+                    reason = data.get("code")
+                    if reason == "too_many_requests":
+                        self.connections[
+                            connection
+                        ] = datetime.datetime.now() + datetime.timedelta(
+                            seconds=self.api_timeout
+                        )
+                        raise TooManyRequests()
+                    if reason == "could_not_fetch_entity_data":
+                        raise EntityNotFound()
+                    else:
+                        raise APIException(
+                            status_code=response.status_code, message=reason
+                        )
 
             return APIResponse(
                 entity_unique_id=data.get("entityUniqueId"),
@@ -186,7 +201,7 @@ class SongLink:
             method="links",
             params={
                 "url": url,
-                "userCountry": user_country,
+                "userCountry": user_country.upper(),
                 "songIfSingle": "true" if song_if_single else "false",
             },
         )
@@ -221,7 +236,7 @@ class SongLink:
                 "id": id,
                 "platform": platform.name,
                 "type": type.name,
-                "userCountry": user_country,
+                "userCountry": user_country.upper(),
                 "songIfSingle": "true" if song_if_single else "false",
             },
         )
