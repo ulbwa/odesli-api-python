@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "odesli_api"
-version = "0.3.0"
+version = "0.3.1"
 description = "A fast and asynchronous wrapper for the Odesli (song.link, album.link) written in Python."
 authors = ["ульба <ulbwa@icloud.com>"]
 readme = "README.md"

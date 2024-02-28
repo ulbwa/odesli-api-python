@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Union
@@ -8,6 +9,8 @@ from aiohttp_proxy import ProxyConnector
 from fake_headers import Headers
 
 from .types import *
+
+logger = logging.getLogger("odesli_api")
 
 
 class Odesli:
@@ -117,6 +120,7 @@ class Odesli:
             ) as response:
                 try:
                     data = orjson.loads(await response.read())
+                    logger.debug("Got response on URL %s: %s", response.url, data)
                 except Exception as exception:
                     raise APIException(
                         status_code=response.status, message=str(exception)
