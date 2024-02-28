@@ -130,3 +130,5 @@ dmypy.json
 .DS_Store
 http_cache
 poetry.lock
+.idea/
+.vscode/
