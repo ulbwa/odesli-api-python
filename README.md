@@ -7,6 +7,12 @@ A fast and asynchronous wrapper for the Odesli (song.link, album.link) written i
 
 API Documentation: [notion.site](https://linktree.notion.site/API-d0ebe08a5e304a55928405eb682f6741)
 
+# Features
+
+- Asynchronous API requests for improved performance.
+- Easy integration into existing asyncio-based Python projects.
+- Utilizes caching with `aiohttp_client_cache` for efficient handling of repeated API requests.
+
 ## Installation
 
 ```bash
