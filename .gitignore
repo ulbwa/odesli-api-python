@@ -132,3 +132,5 @@ http_cache
 poetry.lock
 .idea/
 .vscode/
+/.idea
+/.vscode
